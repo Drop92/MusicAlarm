@@ -6,11 +6,12 @@ import android.content.Intent
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import com.drop92.musicalarm.model.PlaybackType
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.concurrent.timerTask
 
 class MainActivity : AppCompatActivity() {
@@ -27,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        btn_start_intent.setOnClickListener{
+        btn_start_intent.setOnClickListener {
             onIntentButtonClick()
         }
 
@@ -36,6 +37,17 @@ class MainActivity : AppCompatActivity() {
 
         setPlaybackQuery(FEELING_LUCKY_QUERY)
         setPlaybackType(PlaybackType.SMART_CHOICE_QUERY)
+
+        Thread({fetchPlaylists()}).start()
+    }
+
+    private fun fetchPlaylists() {
+        var playlists = findPlaylists()
+        runOnUiThread({playlist_spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, playlists)})
+    }
+
+    private fun getSelectedPlaylist(): String {
+        return playlist_spinner.getSelectedItem().toString()
     }
 
     private fun setPlaybackType(newPlaybackType: PlaybackType) {
@@ -64,18 +76,19 @@ class MainActivity : AppCompatActivity() {
         scheduleAlarm(5 * 60 * 1000)
     }
 
-    private fun findPlaylists() {
-        var play: String =""
-        val proj = arrayOf("playlist_name")
+    private fun findPlaylists(): ArrayList<String> {
+        Thread.sleep(5000)
+        var playLists = arrayListOf<String>()
+        val projection = arrayOf("playlist_name")
         val playlistUri = Uri.parse("content://com.google.android.music.MusicContent/playlists")
-        val playlistCursor = contentResolver.query(playlistUri, proj, null, null, null)
+        val playlistCursor = contentResolver.query(playlistUri, projection, null, null, null)
         if (playlistCursor!!.count > 0) {
             playlistCursor.moveToFirst()
             do {
-                play =  playlistCursor.getString(0)
-                Log.d (TAG, play)
+                playLists.add(playlistCursor.getString(0))
             } while (playlistCursor.moveToNext())
         }
+        return playLists
     }
     
     private fun playNextSong(msTimeout: Long) {
