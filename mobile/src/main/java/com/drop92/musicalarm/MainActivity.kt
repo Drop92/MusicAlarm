@@ -6,15 +6,17 @@ import android.content.Intent
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import com.drop92.musicalarm.fragment.TimePickerFragment
 import com.drop92.musicalarm.model.PlaybackType
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.concurrent.timerTask
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), TimePickerFragment.OnFragmentInteractionListener {
     private val TAG = "Debug"
     private val FEELING_LUCKY_QUERY = ""
     private val NEXT_SONG_TIMEOUT = 5000
@@ -102,6 +104,10 @@ class MainActivity : AppCompatActivity() {
        val i = Intent("com.android.music.musicservicecommand")
        i.putExtra("command", "next")
        sendBroadcast(i)
+    }
+
+    override fun onFragmentInteraction(time: Long) {
+        Log.d("!!!!", "fragment Stuff " + time)
     }
 }
 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment.TimePickerFragment">
+
+    <RelativeLayout
+        android:id="@+id/widget"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center">
+
+        <TextView
+            android:id="@+id/time_picker_hours"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignEnd="@id/semicolon"
+            android:layout_marginEnd="20dp"
+            android:text="@string/time_picker_fragment_hours"
+            android:textSize="55sp" />
+
+        <TextView
+            android:id="@+id/semicolon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/time_picker_hours"
+            android:layout_centerHorizontal="true"
+            android:text="@string/time_picker_fragment_semicolon"
+            android:textSize="50sp" />
+
+        <TextView
+            android:id="@+id/time_picker_minutes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/time_picker_hours"
+            android:layout_alignStart="@id/semicolon"
+            android:layout_marginStart="20dp"
+            android:text="@string/time_picker_fragment_minutes"
+            android:textSize="55sp" />
+    </RelativeLayout>
+</FrameLayout>
