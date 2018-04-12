@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment.PlaybackConfigFragment">
+
+    <RelativeLayout
+        android:id="@+id/playback_config_widget"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center">
+
+        <Button
+            android:id="@+id/playback_any_btn"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="30dp"
+            android:background="@drawable/playback_fragment_button"
+            android:text="Any" />
+
+        <Button
+            android:id="@+id/playback_query_btn"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_alignStart="@+id/playback_any_btn"
+            android:layout_below="@id/playback_any_btn"
+            android:background="@drawable/playback_fragment_button"
+            android:layout_marginTop="3dp"
+            android:text="Query" />
+
+        <Button
+            android:id="@+id/playback_playlist_btn"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_alignStart="@+id/playback_query_btn"
+            android:layout_below="@+id/playback_query_btn"
+            android:background="@drawable/playback_fragment_button"
+            android:layout_marginTop="3dp"
+            android:text="Playlist" />
+
+        <Switch
+            android:id="@+id/playback_next_song_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignStart="@id/playback_any_btn"
+            android:layout_below="@+id/playback_playlist_btn"
+            android:text=" Start with 2nd song " />
+
+        <EditText
+            android:id="@+id/playback_query_edit_text"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/playback_query_btn"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@+id/playback_query_btn"
+            android:text="Your query"
+            android:imeOptions="actionDone"
+            android:cursorVisible="false"
+            android:inputType="text"/>
+
+        <Spinner
+            android:id="@+id/playback_playlist_spinner"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/playback_playlist_btn"
+            android:layout_toEndOf="@+id/playback_playlist_btn"
+            android:layout_marginBottom="5dp"
+            android:layout_marginStart="10dp" />
+
+        <EditText
+            android:id="@+id/playback_2nd_song_timeout_edit_text"
+            android:layout_width="165dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/playback_next_song_switch"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@+id/playback_next_song_switch"
+            android:cursorVisible="false"
+            android:text="4000"
+            android:inputType="numberDecimal"/>
+
+    </RelativeLayout>
+</FrameLayout>

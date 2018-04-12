@@ -1,6 +1,5 @@
 package com.drop92.musicalarm.fragment
 
-import android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK
 import android.app.TimePickerDialog
 import android.content.Context
 import android.os.Bundle
@@ -23,7 +22,7 @@ private const val ARG_MINUTES = "param2"
 /**
  * A simple [Fragment] subclass.
  * Activities that contain this fragment must implement the
- * [TimePickerFragment.OnFragmentInteractionListener] interface
+ * [TimePickerFragment.OnTimePickerFragmentInteractionListener] interface
  * to handle interaction events.
  * Use the [TimePickerFragment.newInstance] factory method to
  * create an instance of this fragment.
@@ -33,7 +32,7 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
     // TODO: Rename and change types of parameters
     private var hours: Int? = null
     private var minutes: Int? = null
-    private var listener: OnFragmentInteractionListener? = null
+    private var listener: OnTimePickerFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,12 +45,12 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        widget.setOnClickListener {
+        time_picker_widget.setOnClickListener {
             val calendar = Calendar.getInstance()
             val hour = calendar.get(Calendar.HOUR_OF_DAY)
             val minute = calendar.get(Calendar.MINUTE)
 
-            val tpd = TimePickerDialog(activity,THEME_DEVICE_DEFAULT_DARK, this, hour, minute, true)
+            val tpd = TimePickerDialog(activity,this, hour, minute, true)
             tpd.show()
         }
     }
@@ -67,14 +66,14 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
         var formatter = SimpleDateFormat("yyyy/MM/dd")
         val today = formatter.format(date)
 
-        var result:Long = formatter.parse(today).time
+        var resultAlarmTimestamp:Long = formatter.parse(today).time
 
-        result += hourOfDay * 60 * 60 * 1000 + minute * 60 * 1000
+        resultAlarmTimestamp += hourOfDay * 60 * 60 * 1000 + minute * 60 * 1000
 
-        if (result < System.currentTimeMillis())
-            result += 24 * 60 * 60 * 1000
+        if (resultAlarmTimestamp < System.currentTimeMillis())
+            resultAlarmTimestamp += 24 * 60 * 60 * 1000
 
-        listener?.onFragmentInteraction(result)
+        listener?.onAlarmTimestampChanged(resultAlarmTimestamp)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -85,10 +84,10 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is OnFragmentInteractionListener) {
+        if (context is OnTimePickerFragmentInteractionListener) {
             listener = context
         } else {
-            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
+            throw RuntimeException(context.toString() + " must implement OnTimePickerFragmentInteractionListener")
         }
     }
 
@@ -108,9 +107,9 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
      * (http://developer.android.com/training/basics/fragments/communicating.html)
      * for more information.
      */
-    interface OnFragmentInteractionListener {
+    interface OnTimePickerFragmentInteractionListener {
         // TODO: Update argument type and name
-        fun onFragmentInteraction(timestamp: Long)
+        fun onAlarmTimestampChanged(timestamp: Long)
     }
 
     companion object {

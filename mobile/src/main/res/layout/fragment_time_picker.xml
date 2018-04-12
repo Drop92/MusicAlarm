@@ -6,7 +6,7 @@
     tools:context=".fragment.TimePickerFragment">
 
     <RelativeLayout
-        android:id="@+id/widget"
+        android:id="@+id/time_picker_widget"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center">

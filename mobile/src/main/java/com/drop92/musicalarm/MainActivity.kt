@@ -3,28 +3,26 @@ package com.drop92.musicalarm
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Toast
+import com.drop92.musicalarm.fragment.PlaybackConfigFragment
 import com.drop92.musicalarm.fragment.TimePickerFragment
 import com.drop92.musicalarm.model.PlaybackType
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.concurrent.timerTask
 
-class MainActivity : AppCompatActivity(), TimePickerFragment.OnFragmentInteractionListener {
-    private val TAG = "Debug"
+class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmentInteractionListener, PlaybackConfigFragment.OnPlaybackConfigFragmentInteractionListener {
     private val FEELING_LUCKY_QUERY = ""
-    private val NEXT_SONG_TIMEOUT = 5000
+    private val NEXT_SONG_TO_DEFAULT = 4000L
 
     private lateinit var am: AlarmManager
     private lateinit var con: Context
-    private lateinit var playbackType: PlaybackType
-    private lateinit var playbackQuery: String
+    private var playbackType: PlaybackType = PlaybackType.SMART_CHOICE_QUERY
+    private var playbackQuery: String = FEELING_LUCKY_QUERY
+    private var nextSongTO: Long = NEXT_SONG_TO_DEFAULT
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,20 +34,6 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnFragmentInteracti
 
         am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         con = this
-
-        setPlaybackQuery(FEELING_LUCKY_QUERY)
-        setPlaybackType(PlaybackType.SMART_CHOICE_QUERY)
-
-        Thread({fetchPlaylists()}).start()
-    }
-
-    private fun fetchPlaylists() {
-        var playlists = findPlaylists()
-        runOnUiThread({playlist_spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, playlists)})
-    }
-
-    private fun getSelectedPlaylist(): String {
-        return playlist_spinner.getSelectedItem().toString()
     }
 
     private fun setPlaybackType(newPlaybackType: PlaybackType) {
@@ -57,6 +41,10 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnFragmentInteracti
     }
     private fun setPlaybackQuery(newPlaybackQuery: String) {
         playbackQuery = newPlaybackQuery
+    }
+
+    private fun setNextSongTO(newTO: Long) {
+        nextSongTO = newTO
     }
 
     private fun scheduleAlarm(msTimeout: Long) {
@@ -78,21 +66,6 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnFragmentInteracti
         scheduleAlarm(5 * 60 * 1000)
     }
 
-    private fun findPlaylists(): ArrayList<String> {
-        Thread.sleep(5000)
-        var playLists = arrayListOf<String>()
-        val projection = arrayOf("playlist_name")
-        val playlistUri = Uri.parse("content://com.google.android.music.MusicContent/playlists")
-        val playlistCursor = contentResolver.query(playlistUri, projection, null, null, null)
-        if (playlistCursor!!.count > 0) {
-            playlistCursor.moveToFirst()
-            do {
-                playLists.add(playlistCursor.getString(0))
-            } while (playlistCursor.moveToNext())
-        }
-        return playLists
-    }
-    
     private fun playNextSong(msTimeout: Long) {
         //workaround to play next song from GM instead of first (it is annoying that GM can't shuffle playlist prior playing)
         //TBD check how it works, probably it can be easier to set up first track as "10 sec silence"
@@ -106,8 +79,20 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnFragmentInteracti
        sendBroadcast(i)
     }
 
-    override fun onFragmentInteraction(time: Long) {
+    override fun onAlarmTimestampChanged(time: Long) {
         Log.d("!!!!", "fragment Stuff " + time)
+    }
+
+    override fun onPlaybackTypeChanged(newType: PlaybackType) {
+        Log.d("!!!!", "fragment Stuff " + newType)
+
+    }
+    override fun onPlaybackQueryChanged(newQuery: String){
+        Log.d("!!!!", "fragment Stuff " + newQuery)
+
+    }
+    override fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long){
+        Log.d("!!!!", "fragment Stuff " + msNewTimeout)
     }
 }
 
