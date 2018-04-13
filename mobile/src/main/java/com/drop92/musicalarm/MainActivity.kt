@@ -15,55 +15,72 @@ import java.util.*
 import kotlin.concurrent.timerTask
 
 class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmentInteractionListener, PlaybackConfigFragment.OnPlaybackConfigFragmentInteractionListener {
+    private val TAG = "!!!"
     private val FEELING_LUCKY_QUERY = ""
     private val NEXT_SONG_TO_DEFAULT = 4000L
 
     private lateinit var am: AlarmManager
     private lateinit var con: Context
     private var playbackType: PlaybackType = PlaybackType.SMART_CHOICE_QUERY
-    private var playbackQuery: String = FEELING_LUCKY_QUERY
-    private var nextSongTO: Long = NEXT_SONG_TO_DEFAULT
+    private var playbackQuery: String? = FEELING_LUCKY_QUERY
+    private var playbackTime: Long = 0
+    private var nextSongTO: Long? = NEXT_SONG_TO_DEFAULT
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        btn_start_intent.setOnClickListener {
+        btn_schedule_alarm.setOnClickListener {
             onIntentButtonClick()
         }
 
         am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         con = this
+
+        var timeConfig: TimePickerFragment = TimePickerFragment.newInstance("","")
+
+        supportFragmentManager.beginTransaction()
+                .add(R.id.time_picker_fragment_container, timeConfig).commit()
+
+        var plConfig: PlaybackConfigFragment = PlaybackConfigFragment.newInstance(playbackType, null, NEXT_SONG_TO_DEFAULT)
+        supportFragmentManager.beginTransaction()
+                .add(R.id.playback_config_fragment_container, plConfig).commit()
     }
 
     private fun setPlaybackType(newPlaybackType: PlaybackType) {
         playbackType = newPlaybackType
     }
-    private fun setPlaybackQuery(newPlaybackQuery: String) {
+    private fun setPlaybackQuery(newPlaybackQuery: String?) {
         playbackQuery = newPlaybackQuery
     }
 
-    private fun setNextSongTO(newTO: Long) {
+    private fun setPlaybackTime(msTarget: Long) {
+        playbackTime = msTarget
+    }
+
+    private fun setNextSongTO(newTO: Long?) {
         nextSongTO = newTO
     }
 
-    private fun scheduleAlarm(msTimeout: Long) {
-        var msTarget = System.currentTimeMillis() + msTimeout
-        am.set(AlarmManager.RTC_WAKEUP, msTarget, playbackType.getPendingIntent(con, playbackQuery))
+    private fun scheduleAlarm(msTargetTime: Long) {
+        playbackQuery?.let {
+            am.set(AlarmManager.RTC_WAKEUP, msTargetTime, playbackType.getPendingIntent(con, it))
+        }
     }
 
     private fun cancelAlarm() {
-        val pi = playbackType.getPendingIntent(con, playbackQuery)
-        pi.cancel()
-        am.cancel(pi)
+        playbackQuery?.let {
+            val pi = playbackType.getPendingIntent(con, it)
+            pi.cancel()
+            am.cancel(pi)
+        }
     }
     
     private fun Context.toast(message: CharSequence) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
     private fun onIntentButtonClick () {
-        this.toast("Music alarm in 5 minutes")
-        //for debug five minute after start app
-        scheduleAlarm(5 * 60 * 1000)
+        scheduleAlarm(playbackTime)
+        this.toast("Music alarm set")
     }
 
     private fun playNextSong(msTimeout: Long) {
@@ -79,20 +96,24 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
        sendBroadcast(i)
     }
 
-    override fun onAlarmTimestampChanged(time: Long) {
-        Log.d("!!!!", "fragment Stuff " + time)
+    override fun onAlarmTimestampChanged(timestamp: Long) {
+        Log.d(TAG, "time: " + timestamp)
+        setPlaybackTime(timestamp)
     }
 
     override fun onPlaybackTypeChanged(newType: PlaybackType) {
-        Log.d("!!!!", "fragment Stuff " + newType)
-
+        Log.d(TAG, "type: " + newType)
+        setPlaybackType(newType)
     }
-    override fun onPlaybackQueryChanged(newQuery: String){
-        Log.d("!!!!", "fragment Stuff " + newQuery)
 
+    override fun onPlaybackQueryChanged(newQuery: String?){
+        Log.d(TAG, "query: " + newQuery)
+        setPlaybackQuery(newQuery)
     }
-    override fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long){
-        Log.d("!!!!", "fragment Stuff " + msNewTimeout)
+
+    override fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long?){
+        Log.d(TAG, "2nd song timeout: " + msNewTimeout)
+        setNextSongTO(msNewTimeout)
     }
 }
 

@@ -8,19 +8,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.widget.ArrayAdapter
+import android.widget.*
 
 import com.drop92.musicalarm.R
 import com.drop92.musicalarm.model.PlaybackType
 import kotlinx.android.synthetic.main.fragment_playback_config.*
-import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 
-
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+private const val ARG_PL_TYPE = "playback_type"
+private const val ARG_PL_QUERY = "playback_query"
+private const val ARG_PL_NEXT_SONG_TO = "playback_next_song_to"
 
 /**
  * A simple [Fragment] subclass.
@@ -32,19 +29,18 @@ private const val ARG_PARAM2 = "param2"
  *
  */
 class PlaybackConfigFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
     private var listener: OnPlaybackConfigFragmentInteractionListener? = null
 
-    private var pbQuery: String =""
-    private var pbNextSongTimeout: Long = 4000
+    private var pbType: PlaybackType? = null
+    private var pbQuery: String? = null
+    private var pbNextSongTimeout: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+            pbType = it.getSerializable(ARG_PL_TYPE) as PlaybackType
+            pbQuery = it.getString(ARG_PL_QUERY)
+            pbNextSongTimeout = it.getLong(ARG_PL_NEXT_SONG_TO)
         }
     }
 
@@ -56,7 +52,6 @@ class PlaybackConfigFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
        super.onActivityCreated(savedInstanceState)
-        tapAnyButton()
 
         Thread({fetchPlaylists()}).start()
 
@@ -74,10 +69,13 @@ class PlaybackConfigFragment : Fragment() {
 
         playback_next_song_switch.setOnCheckedChangeListener { _, isChecked ->
             run {
-                if (isChecked)
+                if (isChecked) {
                     enableView(playback_2nd_song_timeout_edit_text)
-                else
+                    pbNextSongTimeout?.let{notifyNextSongTimeoutChanged(it)}
+                } else {
                     disableView(playback_2nd_song_timeout_edit_text)
+                    notifyNextSongTimeoutChanged(null)
+                }
             }
         }
 
@@ -86,7 +84,7 @@ class PlaybackConfigFragment : Fragment() {
 
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
                 pbQuery = playback_query_edit_text.text.toString()
-                notifyQueryChanged(pbQuery)
+                pbQuery?.let{notifyQueryChanged(it)}
                 true
             }
             false
@@ -94,7 +92,8 @@ class PlaybackConfigFragment : Fragment() {
 
         playback_playlist_spinner.onItemSelectedListener = object : OnItemSelectedListener {
             override fun onItemSelected(parentView: AdapterView<*>, selectedItemView: View, position: Int, id: Long) {
-                notifyPlaylistChanged(parentView.adapter.getItem(position).toString())
+                if(playback_playlist_spinner.isClickable)
+                    notifyPlaylistChanged(parentView.adapter.getItem(position).toString())
             }
 
             override fun onNothingSelected(parentView: AdapterView<*>) {
@@ -107,11 +106,31 @@ class PlaybackConfigFragment : Fragment() {
 
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
                 pbNextSongTimeout = playback_2nd_song_timeout_edit_text.text.toString().toLong()
-                notifyNextSongTimeoutChanged(pbNextSongTimeout)
+                pbNextSongTimeout?.let{notifyNextSongTimeoutChanged(it)}
                 true
             }
             false
         }
+
+        initFragment()
+    }
+
+    private fun initFragment() {
+        pbType?.let{
+            when (it) {
+                PlaybackType.SMART_CHOICE_QUERY -> {
+                    pbQuery?.let{setActiveQueryButton(); playback_query_edit_text.setText(it, TextView.BufferType.EDITABLE)}?: run {setAnyUI()}
+                }
+                PlaybackType.PLAYLIST_SHUFFLE -> {
+                    setActivePlaylistButton()
+                }
+                PlaybackType.PLAYLIST_CONS -> {
+                    setActivePlaylistButton()
+                }
+            }
+        } ?: run {tapAnyButton()}
+
+        pbNextSongTimeout?.let{playback_2nd_song_timeout_edit_text.setText(it.toString(), TextView.BufferType.EDITABLE)}
     }
 
     private fun tapAnyButton() {
@@ -122,7 +141,7 @@ class PlaybackConfigFragment : Fragment() {
 
     private fun tapQueryButton(query: String) {
         setActiveQueryButton()
-        notifyQueryChanged(pbQuery)
+        pbQuery?.let{notifyQueryChanged(it)}
         notifyPlaybackTypeChanged(PlaybackType.SMART_CHOICE_QUERY)
     }
 
@@ -152,10 +171,11 @@ class PlaybackConfigFragment : Fragment() {
         enableView(playback_playlist_spinner)
         enableView(playback_next_song_switch)
 
-        if (playback_next_song_switch.isChecked)
+        if (playback_next_song_switch.isChecked) {
             enableView(playback_2nd_song_timeout_edit_text)
-        else
+        } else {
             disableView(playback_2nd_song_timeout_edit_text)
+        }
     }
 
     private fun setActiveQueryButton() {
@@ -166,7 +186,6 @@ class PlaybackConfigFragment : Fragment() {
         enableView(playback_query_edit_text)
         disableView(playback_playlist_spinner)
         disableView(playback_next_song_switch)
-        disableView(playback_2nd_song_timeout_edit_text)
     }
 
     private fun disableView(v: View) {
@@ -227,7 +246,7 @@ class PlaybackConfigFragment : Fragment() {
         listener?.onPlaybackQueryChanged(query)
     }
 
-    private fun notifyNextSongTimeoutChanged(msTimeout: Long) {
+    private fun notifyNextSongTimeoutChanged(msTimeout: Long?) {
         listener?.onPlaybackNextSongTimeoutChanged(msTimeout)
     }
 
@@ -242,15 +261,11 @@ class PlaybackConfigFragment : Fragment() {
      * activity.
      *
      *
-     * See the Android Training lesson [Communicating with Other Fragments]
-     * (http://developer.android.com/training/basics/fragments/communicating.html)
-     * for more information.
      */
     interface OnPlaybackConfigFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onPlaybackTypeChanged(newType: PlaybackType)
-        fun onPlaybackQueryChanged(newQuery: String)
-        fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long)
+        fun onPlaybackQueryChanged(newQuery: String?)
+        fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long?)
     }
 
     companion object {
@@ -258,17 +273,19 @@ class PlaybackConfigFragment : Fragment() {
          * Use this factory method to create a new instance of
          * this fragment using the provided parameters.
          *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
+         * @param plbkType Parameter 1.
+         * @param plbkQuery Parameter 2.
+         * @param plbkNextSongTO Parameter 3.
          * @return A new instance of fragment PlaybackConfigFragment.
          */
-        // TODO: Rename and change types and number of parameters
+
         @JvmStatic
-        fun newInstance(param1: String, param2: String) =
+        fun newInstance(plbkType: PlaybackType, plbkQuery: String?, plbkNextSongTO: Long) =
                 PlaybackConfigFragment().apply {
                     arguments = Bundle().apply {
-                        putString(ARG_PARAM1, param1)
-                        putString(ARG_PARAM2, param2)
+                        putSerializable(ARG_PL_TYPE, plbkType)
+                        putString(ARG_PL_QUERY, plbkQuery)
+                        putLong(ARG_PL_NEXT_SONG_TO, plbkNextSongTO)
                     }
                 }
     }

@@ -5,6 +5,7 @@ import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.provider.MediaStore
+import android.util.Log
 
 enum class PlaybackType {
     //Query to find something or use "" for //GM feeling lucky radio/resume of prev session
@@ -45,11 +46,14 @@ enum class PlaybackType {
         }
     };
 
+    private val TAG = "!!!"
     abstract fun getMediaStoreIntent(query: String): Intent
     private val requestCode = 1408
 
     fun getPendingIntent(ctx: Context, query: String): PendingIntent {
-        return PendingIntent.getActivity(ctx, requestCode, getMediaStoreIntent(query), PendingIntent.FLAG_UPDATE_CURRENT)
+        var i = getMediaStoreIntent(query)
+        Log.d(TAG,"" + i + "\n" + i.extras)
+        return PendingIntent.getActivity(ctx, requestCode, i, PendingIntent.FLAG_UPDATE_CURRENT)
         //https://developer.android.com/reference/android/app/PendingIntent.html#FLAG_UPDATE_CURRENT
     }
 }

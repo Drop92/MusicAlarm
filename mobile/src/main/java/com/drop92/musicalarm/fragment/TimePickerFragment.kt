@@ -14,10 +14,8 @@ import kotlinx.android.synthetic.main.fragment_time_picker.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_HOURS = "param1"
-private const val ARG_MINUTES = "param2"
+private const val ARG_HOURS = "arg_hh"
+private const val ARG_MINUTES = "arg_mm"
 
 /**
  * A simple [Fragment] subclass.
@@ -29,7 +27,6 @@ private const val ARG_MINUTES = "param2"
  *
  */
 class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
-    // TODO: Rename and change types of parameters
     private var hours: Int? = null
     private var minutes: Int? = null
     private var listener: OnTimePickerFragmentInteractionListener? = null
@@ -37,13 +34,23 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            hours = it.getString(ARG_HOURS).toInt()
-            minutes = it.getString(ARG_MINUTES).toInt()
+            try {
+                if (it.getString(ARG_HOURS).toInt() < 23 && it.getString(ARG_MINUTES).toInt() < 59) {
+                    hours = it.getString(ARG_HOURS).toInt()
+                    minutes = it.getString(ARG_MINUTES).toInt()
+                }
+            } catch (e: NumberFormatException) {
+                hours = null
+                minutes = null
+            }
         }
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+
+        hours?.let{time_picker_hours.text = String.format("%02d", it)}
+        minutes?.let{time_picker_minutes.text = String.format("%02d", it)}
 
         time_picker_widget.setOnClickListener {
             val calendar = Calendar.getInstance()
@@ -56,7 +63,6 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
     }
 
     override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
-        // Do something with the returned time
         time_picker_hours.text = String.format("%02d", hourOfDay)
         time_picker_minutes.text = String.format("%02d", minute)
         hours = hourOfDay
@@ -73,7 +79,7 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
         if (resultAlarmTimestamp < System.currentTimeMillis())
             resultAlarmTimestamp += 24 * 60 * 60 * 1000
 
-        listener?.onAlarmTimestampChanged(resultAlarmTimestamp)
+        notifyAlarmTimestampChanged(resultAlarmTimestamp)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
@@ -96,19 +102,17 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
         listener = null
     }
 
+    private fun notifyAlarmTimestampChanged(newTs: Long) {
+        listener?.onAlarmTimestampChanged(newTs)
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
      * to the activity and potentially other fragments contained in that
      * activity.
-     *
-     *
-     * See the Android Training lesson [Communicating with Other Fragments]
-     * (http://developer.android.com/training/basics/fragments/communicating.html)
-     * for more information.
      */
     interface OnTimePickerFragmentInteractionListener {
-        // TODO: Update argument type and name
         fun onAlarmTimestampChanged(timestamp: Long)
     }
 
@@ -117,17 +121,17 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
          * Use this factory method to create a new instance of
          * this fragment using the provided parameters.
          *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
+         * @param hh hours - 00 to 23.
+         * @param mm minutes - 00 to 59.
          * @return A new instance of fragment TimePickerFragment.
          */
-        // TODO: Rename and change types and number of parameters
+
         @JvmStatic
-        fun newInstance(param1: String, param2: String) =
+        fun newInstance(hh: String, mm: String) =
             TimePickerFragment().apply {
                 arguments = Bundle().apply {
-                    putString(ARG_HOURS, param1)
-                    putString(ARG_MINUTES, param2)
+                    putString(ARG_HOURS, hh)
+                    putString(ARG_MINUTES, mm)
                 }
             }
     }
