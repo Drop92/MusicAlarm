@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
 
     private fun scheduleAlarm(msTargetTime: Long) {
         playbackQuery?.let {
-            am.set(AlarmManager.RTC_WAKEUP, msTargetTime, playbackType.getPendingIntent(con, it))
+            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, msTargetTime, playbackType.getPendingIntent(con, it))
         }
     }
 

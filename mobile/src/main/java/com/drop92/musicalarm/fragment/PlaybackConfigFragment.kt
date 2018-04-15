@@ -202,7 +202,17 @@ class PlaybackConfigFragment : Fragment() {
 
     private fun fetchPlaylists() {
         var playlists = findPlaylists()
-        activity?.runOnUiThread({playback_playlist_spinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, playlists) })
+        activity?.runOnUiThread({
+            playback_playlist_spinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, playlists)
+            pbQuery?.let{
+                for (playlistPosition in 0 until playback_playlist_spinner.adapter.count) {
+                    var item = playback_playlist_spinner.adapter.getItem(playlistPosition)
+                    if (item == it) {
+                        playback_playlist_spinner.setSelection(playlistPosition)
+                    }
+                }
+            }
+        })
     }
 
     private fun findPlaylists(): ArrayList<String> {
