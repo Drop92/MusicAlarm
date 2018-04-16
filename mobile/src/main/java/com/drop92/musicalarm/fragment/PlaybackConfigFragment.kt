@@ -14,10 +14,12 @@ import com.drop92.musicalarm.R
 import com.drop92.musicalarm.model.PlaybackType
 import kotlinx.android.synthetic.main.fragment_playback_config.*
 import android.widget.AdapterView.OnItemSelectedListener
+import com.drop92.musicalarm.utils.Constants
 
 private const val ARG_PL_TYPE = "playback_type"
 private const val ARG_PL_QUERY = "playback_query"
 private const val ARG_PL_NEXT_SONG_TO = "playback_next_song_to"
+private const val ARG_PL_NEXT_SONG_SWITCH_IS_ENABLED = "playback_next_song_switch_state"
 
 /**
  * A simple [Fragment] subclass.
@@ -31,9 +33,11 @@ private const val ARG_PL_NEXT_SONG_TO = "playback_next_song_to"
 class PlaybackConfigFragment : Fragment() {
     private var listener: OnPlaybackConfigFragmentInteractionListener? = null
 
-    private var pbType: PlaybackType? = null
-    private var pbQuery: String? = null
-    private var pbNextSongTimeout: Long? = null
+    //defaults
+    private var pbType: PlaybackType = PlaybackType.SMART_CHOICE_ANY
+    private var pbQuery: String = Constants.FEELING_LUCKY_QUERY
+    private var pbNextSongTimeout: Long = Constants.NEXT_SONG_TO_DEFAULT
+    private var pbNextSongSwitchIsEnabled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +45,7 @@ class PlaybackConfigFragment : Fragment() {
             pbType = it.getSerializable(ARG_PL_TYPE) as PlaybackType
             pbQuery = it.getString(ARG_PL_QUERY)
             pbNextSongTimeout = it.getLong(ARG_PL_NEXT_SONG_TO)
+            pbNextSongSwitchIsEnabled = it.getBoolean(ARG_PL_NEXT_SONG_SWITCH_IS_ENABLED)
         }
     }
 
@@ -60,21 +65,23 @@ class PlaybackConfigFragment : Fragment() {
         }
 
         playback_query_btn.setOnClickListener {
-            tapQueryButton("")
+            tapQueryButton()
         }
 
         playback_playlist_btn.setOnClickListener {
-            tapPlaylistButton("")
+            tapPlaylistButton()
         }
 
         playback_next_song_switch.setOnCheckedChangeListener { _, isChecked ->
             run {
                 if (isChecked) {
                     enableView(playback_2nd_song_timeout_edit_text)
-                    pbNextSongTimeout?.let{notifyNextSongTimeoutChanged(it)}
+                    pbNextSongSwitchIsEnabled = true
+                    notifyPlaybackNextSongSwitchChanged(pbNextSongSwitchIsEnabled)
                 } else {
                     disableView(playback_2nd_song_timeout_edit_text)
-                    notifyNextSongTimeoutChanged(null)
+                    pbNextSongSwitchIsEnabled = false
+                    notifyPlaybackNextSongSwitchChanged(pbNextSongSwitchIsEnabled)
                 }
             }
         }
@@ -84,7 +91,7 @@ class PlaybackConfigFragment : Fragment() {
 
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
                 pbQuery = playback_query_edit_text.text.toString()
-                pbQuery?.let{notifyQueryChanged(it)}
+                notifyQueryChanged(pbQuery)
                 true
             }
             false
@@ -97,7 +104,6 @@ class PlaybackConfigFragment : Fragment() {
             }
 
             override fun onNothingSelected(parentView: AdapterView<*>) {
-                // your code here
             }
         }
 
@@ -105,9 +111,14 @@ class PlaybackConfigFragment : Fragment() {
             _, keyCode, _ ->
 
             if (keyCode == EditorInfo.IME_ACTION_DONE) {
-                pbNextSongTimeout = playback_2nd_song_timeout_edit_text.text.toString().toLong()
-                pbNextSongTimeout?.let{notifyNextSongTimeoutChanged(it)}
-                true
+                try {
+                    pbNextSongTimeout = playback_2nd_song_timeout_edit_text.text.toString().toLong()
+                    notifyNextSongTimeoutChanged(pbNextSongTimeout)
+                } catch (e: NumberFormatException){
+                    //fall back to default
+                    pbNextSongTimeout = Constants.NEXT_SONG_TO_DEFAULT
+                    playback_2nd_song_timeout_edit_text.setText(pbNextSongTimeout.toString(), TextView.BufferType.EDITABLE)
+                }
             }
             false
         }
@@ -116,36 +127,41 @@ class PlaybackConfigFragment : Fragment() {
     }
 
     private fun initFragment() {
-        pbType?.let{
-            when (it) {
-                PlaybackType.SMART_CHOICE_QUERY -> {
-                    pbQuery?.let{setActiveQueryButton(); playback_query_edit_text.setText(it, TextView.BufferType.EDITABLE)}?: run {setAnyUI()}
-                }
-                PlaybackType.PLAYLIST_SHUFFLE -> {
-                    setActivePlaylistButton()
-                }
-                PlaybackType.PLAYLIST_CONS -> {
-                    setActivePlaylistButton()
-                }
+        when (pbType) {
+            PlaybackType.SMART_CHOICE_ANY -> {
+                setAnyUI()
             }
-        } ?: run {tapAnyButton()}
 
-        pbNextSongTimeout?.let{playback_2nd_song_timeout_edit_text.setText(it.toString(), TextView.BufferType.EDITABLE)}
+            PlaybackType.SMART_CHOICE_QUERY -> {
+                playback_query_edit_text.setText(pbQuery, TextView.BufferType.EDITABLE)
+                setActiveQueryButton()
+            }
+
+            PlaybackType.PLAYLIST_SHUFFLE -> {
+                setActivePlaylistButton()
+            }
+
+            PlaybackType.PLAYLIST_CONS -> {
+                setActivePlaylistButton()
+            }
+        }
+
+        playback_2nd_song_timeout_edit_text.setText(pbNextSongTimeout.toString(), TextView.BufferType.EDITABLE)
     }
 
     private fun tapAnyButton() {
         setAnyUI()
-        notifyQueryChanged("")
-        notifyPlaybackTypeChanged(PlaybackType.SMART_CHOICE_QUERY)
+        notifyQueryChanged(Constants.FEELING_LUCKY_QUERY)
+        notifyPlaybackTypeChanged(PlaybackType.SMART_CHOICE_ANY)
     }
 
-    private fun tapQueryButton(query: String) {
+    private fun tapQueryButton() {
         setActiveQueryButton()
-        pbQuery?.let{notifyQueryChanged(it)}
+        notifyQueryChanged(pbQuery)
         notifyPlaybackTypeChanged(PlaybackType.SMART_CHOICE_QUERY)
     }
 
-    private fun tapPlaylistButton(playlistName: String) {
+    private fun tapPlaylistButton() {
         setActivePlaylistButton()
         notifyPlaylistChanged(getSelectedPlaylist())
         notifyPlaybackTypeChanged(PlaybackType.PLAYLIST_SHUFFLE)
@@ -170,6 +186,8 @@ class PlaybackConfigFragment : Fragment() {
         disableView(playback_query_edit_text)
         enableView(playback_playlist_spinner)
         enableView(playback_next_song_switch)
+
+        playback_next_song_switch.isChecked = pbNextSongSwitchIsEnabled
 
         if (playback_next_song_switch.isChecked) {
             enableView(playback_2nd_song_timeout_edit_text)
@@ -204,12 +222,10 @@ class PlaybackConfigFragment : Fragment() {
         var playlists = findPlaylists()
         activity?.runOnUiThread({
             playback_playlist_spinner.adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, playlists)
-            pbQuery?.let{
-                for (playlistPosition in 0 until playback_playlist_spinner.adapter.count) {
-                    var item = playback_playlist_spinner.adapter.getItem(playlistPosition)
-                    if (item == it) {
-                        playback_playlist_spinner.setSelection(playlistPosition)
-                    }
+            for (playlistPosition in 0 until playback_playlist_spinner.adapter.count) {
+                var item = playback_playlist_spinner.adapter.getItem(playlistPosition)
+                if (item == pbQuery) {
+                    playback_playlist_spinner.setSelection(playlistPosition)
                 }
             }
         })
@@ -247,7 +263,6 @@ class PlaybackConfigFragment : Fragment() {
         listener = null
     }
 
-
     private fun notifyPlaylistChanged(plQuery: String) {
         listener?.onPlaybackQueryChanged(plQuery)
     }
@@ -256,12 +271,16 @@ class PlaybackConfigFragment : Fragment() {
         listener?.onPlaybackQueryChanged(query)
     }
 
-    private fun notifyNextSongTimeoutChanged(msTimeout: Long?) {
+    private fun notifyNextSongTimeoutChanged(msTimeout: Long) {
         listener?.onPlaybackNextSongTimeoutChanged(msTimeout)
     }
 
     private fun notifyPlaybackTypeChanged(newType: PlaybackType) {
         listener?.onPlaybackTypeChanged(newType)
+    }
+
+    private fun notifyPlaybackNextSongSwitchChanged(isEnabled: Boolean) {
+        listener?.onPlaybackNextSongSwitchChanged(isEnabled)
     }
 
     /**
@@ -274,8 +293,9 @@ class PlaybackConfigFragment : Fragment() {
      */
     interface OnPlaybackConfigFragmentInteractionListener {
         fun onPlaybackTypeChanged(newType: PlaybackType)
-        fun onPlaybackQueryChanged(newQuery: String?)
-        fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long?)
+        fun onPlaybackQueryChanged(newQuery: String)
+        fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long)
+        fun onPlaybackNextSongSwitchChanged(isEnabled: Boolean)
     }
 
     companion object {
@@ -286,16 +306,18 @@ class PlaybackConfigFragment : Fragment() {
          * @param plbkType Parameter 1.
          * @param plbkQuery Parameter 2.
          * @param plbkNextSongTO Parameter 3.
+         * @param plbkNextSongSwitchIsEnabled Parameter 4
          * @return A new instance of fragment PlaybackConfigFragment.
          */
 
         @JvmStatic
-        fun newInstance(plbkType: PlaybackType, plbkQuery: String?, plbkNextSongTO: Long) =
+        fun newInstance(plbkType: PlaybackType, plbkQuery: String, plbkNextSongTO: Long, plbkNextSongSwitchIsEnabled: Boolean) =
                 PlaybackConfigFragment().apply {
                     arguments = Bundle().apply {
                         putSerializable(ARG_PL_TYPE, plbkType)
                         putString(ARG_PL_QUERY, plbkQuery)
                         putLong(ARG_PL_NEXT_SONG_TO, plbkNextSongTO)
+                        putBoolean(ARG_PL_NEXT_SONG_SWITCH_IS_ENABLED, plbkNextSongSwitchIsEnabled)
                     }
                 }
     }

@@ -8,7 +8,17 @@ import android.provider.MediaStore
 import android.util.Log
 
 enum class PlaybackType {
-    //Query to find something or use "" for //GM feeling lucky radio/resume of prev session
+    //Use "" for //GM feeling lucky radio/resume of prev session
+    SMART_CHOICE_ANY {
+        override fun getMediaStoreIntent(query: String): Intent {
+            val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
+            intent.putExtra(MediaStore.EXTRA_MEDIA_FOCUS,"vnd.android.cursor.item/*")
+            intent.putExtra(SearchManager.QUERY, "")
+            return intent
+        }
+    },
+
+    //Query to find something
     SMART_CHOICE_QUERY {
         override fun getMediaStoreIntent(query: String): Intent {
             val intent = Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH)
