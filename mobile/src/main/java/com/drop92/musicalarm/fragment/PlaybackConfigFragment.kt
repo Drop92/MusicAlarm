@@ -163,7 +163,7 @@ class PlaybackConfigFragment : Fragment() {
 
     private fun tapPlaylistButton() {
         setActivePlaylistButton()
-        notifyPlaylistChanged(getSelectedPlaylist())
+        notifyPlaylistChanged(getSelectedPlaylist()?: Constants.FEELING_LUCKY_QUERY)
         notifyPlaybackTypeChanged(PlaybackType.PLAYLIST_SHUFFLE)
     }
 
@@ -236,17 +236,24 @@ class PlaybackConfigFragment : Fragment() {
         val projection = arrayOf("playlist_name")
         val playlistUri = Uri.parse("content://com.google.android.music.MusicContent/playlists")
         val playlistCursor = context?.contentResolver?.query(playlistUri, projection, null, null, null)
-        if (playlistCursor!!.count > 0) {
-            playlistCursor.moveToFirst()
-            do {
-                playLists.add(playlistCursor.getString(0))
-            } while (playlistCursor.moveToNext())
+
+        playlistCursor?.let {
+            if (it!!.count > 0) {
+                it.moveToFirst()
+                do {
+                    playLists.add(it.getString(0))
+                } while (it.moveToNext())
+            }
         }
         return playLists
     }
 
-    private fun getSelectedPlaylist(): String {
-        return playback_playlist_spinner.selectedItem.toString()
+    private fun getSelectedPlaylist(): String? {
+        playback_playlist_spinner.selectedItem?.let{
+            return it.toString()
+        }?: run {
+            return null
+        }
     }
 
     override fun onAttach(context: Context) {

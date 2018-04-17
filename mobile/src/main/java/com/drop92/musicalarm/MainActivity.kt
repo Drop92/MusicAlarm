@@ -67,8 +67,6 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
         supportFragmentManager.beginTransaction()
                 .add(R.id.time_picker_fragment_container, timeConfig).commit()
 
-        playbackType = PlaybackType.valueOf(sp.getValue(Constants.PREF_PLAYBACK_KEY, PlaybackType.SMART_CHOICE_QUERY.name))
-
         var plConfig: PlaybackConfigFragment = PlaybackConfigFragment.newInstance(playbackType, playbackQuery, playbackNextSongTO, playbackNextSongSwitchIsEnabled)
         supportFragmentManager.beginTransaction()
                 .add(R.id.playback_config_fragment_container, plConfig).commit()
