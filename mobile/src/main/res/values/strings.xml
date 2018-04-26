@@ -4,6 +4,7 @@
     <string name="time_picker_fragment_semicolon">:</string>
     <string name="time_picker_fragment_hours">hh</string>
     <string name="time_picker_fragment_minutes">mm</string>
+    <string name="time_picker_fragment_schedule">Schedule</string>
     <string name="cancel_intent">Cancel Alarm</string>
 
     <!-- TODO: Remove or change this placeholder text -->

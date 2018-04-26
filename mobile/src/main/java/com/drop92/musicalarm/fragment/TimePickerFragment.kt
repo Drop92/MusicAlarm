@@ -60,6 +60,15 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
             val tpd = TimePickerDialog(activity,this, hour, minute, true)
             tpd.show()
         }
+
+        btn_schedule_for_tv.setOnClickListener {
+            val calendar = Calendar.getInstance()
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+
+            val tpd = TimePickerDialog(activity,this, hour, minute, true)
+            tpd.show()
+        }
     }
 
     override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {

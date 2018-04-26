@@ -11,6 +11,14 @@
         android:layout_height="match_parent"
         android:layout_gravity="center">
 
+        <Button
+            android:id="@+id/btn_schedule_for_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/time_picker_fragment_schedule"
+            android:layout_marginEnd="30dp"
+            android:layout_marginTop= "60dp" />
+
         <TextView
             android:id="@+id/time_picker_hours"
             android:layout_width="wrap_content"
