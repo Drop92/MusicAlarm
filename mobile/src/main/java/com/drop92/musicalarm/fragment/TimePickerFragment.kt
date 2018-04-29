@@ -1,5 +1,6 @@
 package com.drop92.musicalarm.fragment
 
+import android.app.AlertDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.os.Bundle
@@ -7,10 +8,12 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.NumberPicker
 import android.widget.TimePicker
 
 import com.drop92.musicalarm.R
 import kotlinx.android.synthetic.main.fragment_time_picker.*
+
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -58,25 +61,45 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
             val minute = calendar.get(Calendar.MINUTE)
 
             val tpd = TimePickerDialog(activity,this, hour, minute, true)
+
             tpd.show()
         }
 
         btn_schedule_for_tv.setOnClickListener {
-            val calendar = Calendar.getInstance()
-            val hour = calendar.get(Calendar.HOUR_OF_DAY)
-            val minute = calendar.get(Calendar.MINUTE)
-
-            val tpd = TimePickerDialog(activity,this, hour, minute, true)
-            tpd.show()
+            alarmNumberPicker()
         }
     }
 
-    override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
-        time_picker_hours.text = String.format("%02d", hourOfDay)
-        time_picker_minutes.text = String.format("%02d", minute)
-        hours = hourOfDay
-        minutes = minute
+    private fun alarmNumberPicker() {
+        val dialog = AlertDialog.Builder(context)
+        val inflater = this.layoutInflater
+        val dialogView = inflater.inflate(R.layout.number_picker_for_setting_time, null)
+        dialog.setTitle("Set alarm time")
+        dialog.setView(dialogView)
+        val numberPickerHour = dialogView.findViewById<NumberPicker>(R.id.time_picker_hours)
+        val numberPickerMinutes = dialogView.findViewById<NumberPicker>(R.id.time_picker_minutes)
+        numberPickerHour.maxValue = 23
+        numberPickerHour.minValue = 0
+        numberPickerHour.wrapSelectorWheel = true
 
+        numberPickerMinutes.maxValue = 59
+        numberPickerMinutes.minValue = 0
+        numberPickerMinutes.wrapSelectorWheel = true
+
+        hours?.let{numberPickerHour.value = it}
+        minutes?.let{numberPickerMinutes.value = it}
+
+        dialog.setPositiveButton("OK") { _, _ ->
+            updateTimePickerWidget(numberPickerHour.value, numberPickerMinutes.value)
+            notifyAlarmTimestampChanged(getAlarmTimestamp(numberPickerHour.value, numberPickerMinutes.value))
+        }
+
+        dialog.setNegativeButton("Cancel") { _, _ -> }
+        val alertDialog = dialog.create()
+        alertDialog.show()
+    }
+
+    private fun getAlarmTimestamp(hourOfDay: Int, minute: Int):Long {
         var date = Date(System.currentTimeMillis())
         var formatter = SimpleDateFormat("yyyy/MM/dd")
         val today = formatter.format(date)
@@ -88,7 +111,19 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
         if (resultAlarmTimestamp < System.currentTimeMillis())
             resultAlarmTimestamp += 24 * 60 * 60 * 1000
 
-        notifyAlarmTimestampChanged(resultAlarmTimestamp)
+        return resultAlarmTimestamp
+    }
+
+    private fun updateTimePickerWidget(hourOfDay: Int, minute: Int) {
+        time_picker_hours.text = String.format("%02d", hourOfDay)
+        time_picker_minutes.text = String.format("%02d", minute)
+    }
+
+    override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
+        hours = hourOfDay
+        minutes = minute
+        updateTimePickerWidget(hourOfDay, minute)
+        notifyAlarmTimestampChanged(getAlarmTimestamp(hourOfDay, minute))
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
