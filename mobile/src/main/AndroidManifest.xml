@@ -9,6 +9,9 @@
     <uses-feature android:name="android.software.leanback"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
+
     <application
         android:banner="@drawable/music_alarm_banner"
         android:allowBackup="true"

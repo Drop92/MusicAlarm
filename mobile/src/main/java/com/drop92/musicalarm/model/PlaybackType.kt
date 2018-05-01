@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.MediaStore
 import android.util.Log
+import com.drop92.musicalarm.utils.Constants
 
 enum class PlaybackType {
     //Use "" for //GM feeling lucky radio/resume of prev session
@@ -56,13 +57,12 @@ enum class PlaybackType {
         }
     };
 
-    private val TAG = "!!!"
     abstract fun getMediaStoreIntent(query: String): Intent
-    private val requestCode = 1408
+    private val requestCode =  Constants.PLAYBACK_TYPE_REQUEST_CODE
 
     fun getPendingIntent(ctx: Context, query: String): PendingIntent {
         var i = getMediaStoreIntent(query)
-        Log.d(TAG,"" + i + "\n" + i.extras)
+        Log.d(Constants.PLAYBACK_TYPE_TAG,"" + i + "\n" + i.extras)
         return PendingIntent.getActivity(ctx, requestCode, i, PendingIntent.FLAG_UPDATE_CURRENT)
         //https://developer.android.com/reference/android/app/PendingIntent.html#FLAG_UPDATE_CURRENT
     }

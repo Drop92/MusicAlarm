@@ -1,9 +1,13 @@
 package com.drop92.musicalarm
 
 import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -19,9 +23,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.timerTask
+import android.os.PowerManager
+import android.provider.Settings
 
 class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmentInteractionListener, PlaybackConfigFragment.OnPlaybackConfigFragmentInteractionListener {
-    private val TAG = "!!!"
 
     private lateinit var am: AlarmManager
     private lateinit var con: Context
@@ -29,6 +34,7 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
     private var playbackType: PlaybackType = PlaybackType.SMART_CHOICE_QUERY
     private var playbackQuery: String = Constants.FEELING_LUCKY_QUERY
     private var playbackNextSongTO: Long = Constants.NEXT_SONG_TO_DEFAULT
+    private var requestCode: Int = Constants.MAIN_ACTIVITY_REQUEST_CODE
 
     private var pendingAlarmTimestampMs: Long = 0
     private var playbackNextSongSwitchIsEnabled: Boolean = false
@@ -70,6 +76,20 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
         var plConfig: PlaybackConfigFragment = PlaybackConfigFragment.newInstance(playbackType, playbackQuery, playbackNextSongTO, playbackNextSongSwitchIsEnabled)
         supportFragmentManager.beginTransaction()
                 .add(R.id.playback_config_fragment_container, plConfig).commit()
+
+
+//        //check that app ignores battery optimizations
+//        val intent = Intent()
+//        val packageName = this.packageName
+//        val pm = this.getSystemService(Context.POWER_SERVICE) as PowerManager
+//
+//        if (pm.isIgnoringBatteryOptimizations(packageName))
+//            intent.action = Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS
+//        else {
+//            intent.action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+//            intent.data = Uri.parse("package:$packageName")
+//        }
+//        this.startActivity(intent)
     }
 
     private fun readInitData() {
@@ -108,7 +128,14 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
 
     private fun scheduleAlarm(msTargetTime: Long) {
         if (pendingAlarmTimestampMs > System.currentTimeMillis()) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, msTargetTime, playbackType.getPendingIntent(con, playbackQuery))
+
+            var i = Intent.makeMainActivity(this.componentName)
+            var pi = PendingIntent.getActivity(this, requestCode, i, PendingIntent.FLAG_UPDATE_CURRENT)
+            var alarmInfo = AlarmManager.AlarmClockInfo(msTargetTime, pi)
+
+            am.setAlarmClock(alarmInfo, playbackType.getPendingIntent(con, playbackQuery))
+            //commented out. Exact is not working exactly enough
+            //am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, msTargetTime, playbackType.getPendingIntent(con, playbackQuery))
             sp.setValue(Constants.PREF_ALARM_TIME_MS, pendingAlarmTimestampMs)
             this.toast("Music alarm set")
         } else {
@@ -146,27 +173,27 @@ class MainActivity : AppCompatActivity(), TimePickerFragment.OnTimePickerFragmen
 
     //listeners
     override fun onAlarmTimestampChanged(timestamp: Long) {
-        Log.d(TAG, "time: " + timestamp)
+        Log.d(Constants.MAIN_ACTIVITY_TAG, "time: $timestamp")
         setPlaybackTime(timestamp)
     }
 
     override fun onPlaybackTypeChanged(newType: PlaybackType) {
-        Log.d(TAG, "type: " + newType)
+        Log.d(Constants.MAIN_ACTIVITY_TAG, "type: $newType")
         setPlaybackType(newType)
     }
 
     override fun onPlaybackQueryChanged(newQuery: String){
-        Log.d(TAG, "query: " + newQuery)
+        Log.d(Constants.MAIN_ACTIVITY_TAG, "query: $newQuery")
         setPlaybackQuery(newQuery)
     }
 
     override fun onPlaybackNextSongTimeoutChanged(msNewTimeout: Long){
-        Log.d(TAG, "2nd song timeout: " + msNewTimeout)
+        Log.d(Constants.MAIN_ACTIVITY_TAG, "2nd song timeout: $msNewTimeout")
         setNextSongTO(msNewTimeout)
     }
 
     override fun onPlaybackNextSongSwitchChanged(isEnabled: Boolean){
-        Log.d(TAG, "2nd song is enabled: " + isEnabled)
+        Log.d(Constants.MAIN_ACTIVITY_TAG, "2nd song is enabled: $isEnabled")
         setNextSongSwitchState(isEnabled)
     }
 }

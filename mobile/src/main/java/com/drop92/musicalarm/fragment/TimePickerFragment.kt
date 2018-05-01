@@ -115,13 +115,14 @@ class TimePickerFragment : Fragment(), TimePickerDialog.OnTimeSetListener {
     }
 
     private fun updateTimePickerWidget(hourOfDay: Int, minute: Int) {
+        //TO DO: check if I really need to keep hours and minutes inside class
+        hours = hourOfDay
+        minutes = minute
         time_picker_hours.text = String.format("%02d", hourOfDay)
         time_picker_minutes.text = String.format("%02d", minute)
     }
 
     override fun onTimeSet(view: TimePicker, hourOfDay: Int, minute: Int) {
-        hours = hourOfDay
-        minutes = minute
         updateTimePickerWidget(hourOfDay, minute)
         notifyAlarmTimestampChanged(getAlarmTimestamp(hourOfDay, minute))
     }
